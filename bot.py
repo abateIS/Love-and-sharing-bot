@@ -147,16 +147,8 @@ def main():
     # Start health server in background (HF needs this on port 7860)
     threading.Thread(target=run_health_check_server, daemon=True).start()
 
-    print("--- STARTING CONNECTION LOOP ---")
-    
-    while True:
-        try:
-            logger.info("Attempting to connect to Telegram...")
-            application.run_polling(drop_pending_updates=True)
-            break 
-        except Exception as e:
-            logger.error(f"Network error: {e}. Retrying in 15 seconds...")
-            time.sleep(15)
+    logger.info("Bot is starting...")
+    application.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     main()
