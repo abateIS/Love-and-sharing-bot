@@ -97,6 +97,14 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"Bot is active")
 
+    def do_HEAD(self):
+        self.send_response(200)
+        self.end_headers()
+
+    def log_message(self, format, *args):
+        # Silence the flood of health check logs
+        return
+
 def run_health_check_server():
     # Render uses port 10000 by default for health checks
     server = HTTPServer(('0.0.0.0', 10000), HealthCheckHandler)
@@ -143,11 +151,11 @@ def main():
     
     while True:
         try:
-            print("Attempting to connect to Telegram...")
+            logger.info("Attempting to connect to Telegram...")
             application.run_polling(drop_pending_updates=True)
             break 
         except Exception as e:
-            print(f"Network error: {e}. Retrying in 15 seconds...")
+            logger.error(f"Network error: {e}. Retrying in 15 seconds...")
             time.sleep(15)
 
 if __name__ == "__main__":
