@@ -5,6 +5,7 @@ import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.request import HTTPXRequest
+import asyncio
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -115,17 +116,14 @@ async def cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 def main():
-    """Survival mode for Hugging Face."""
+    """Main entry point with explicit loop handling for Render."""
     print("DEBUG: Setting up bot handlers...")
-    
-    # Use longer timeouts to fight the server lag
-    request = HTTPXRequest(connect_timeout=30, read_timeout=30)
     
     application = (
         Application.builder()
         .token(BOT_TOKEN)
-        .request(request)
-        .get_updates_request(request)
+        .connect_timeout(30)
+        .read_timeout(30)
         .build()
     )
     
@@ -144,11 +142,16 @@ def main():
     application.add_handler(CallbackQueryHandler(button_click, pattern="^donate$"))
     application.add_handler(conv_handler)
 
-    # Start health server in background (HF needs this on port 7860)
+    # Start health server in background
     threading.Thread(target=run_health_check_server, daemon=True).start()
 
-    logger.info("Bot is starting...")
-    application.run_polling(drop_pending_updates=True)
+    logger.info("Bot is starting (Async Mode)...")
+    
+    # Modern loop handling to fix "no current event loop" error
+    try:
+        application.run_polling(drop_pending_updates=True)
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
 
 if __name__ == "__main__":
     main()
